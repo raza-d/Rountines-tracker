@@ -429,6 +429,7 @@ document.getElementById('task-list').addEventListener('click', (e) => {
   if (e.target.classList.contains('check-btn')) {
     if (!doneState[activeDay]) doneState[activeDay] = {};
     doneState[activeDay][id] = !doneState[activeDay][id];
+    if (doneState[activeDay][id]) cancelSwAlarm(id);
     saveDone();
     render();
   } else if (e.target.classList.contains('del-btn')) {
@@ -452,6 +453,7 @@ document.getElementById('add-btn').addEventListener('click', () => {
   document.getElementById('title-input').value = '';
   document.getElementById('alarm-input').checked = false;
   render();
+  setTimeout(scheduleAlarmsInServiceWorker, 300);
 });
 
 let audioCtx = null;
@@ -496,7 +498,41 @@ function stopAlarmSound() {
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
 }
 
-function sendSystemNotification(title, text) {
+function scheduleAlarmsInServiceWorker() {
+  if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+  const todayKey = currentDayKey();
+  const dayTasks = tasksByDay[todayKey] || [];
+  const dayDone = doneState[todayKey] || {};
+  const now = new Date();
+  const alarms = [];
+
+  dayTasks.forEach(t => {
+    if (!t.alarm || dayDone[t.id]) return;
+    const [h, m] = t.time.split(':').map(Number);
+    const fireAt = new Date();
+    fireAt.setHours(h, m, 0, 0);
+    if (fireAt > now) {
+      alarms.push({
+        id: t.id,
+        title: t.title,
+        timeStr: formatTime(t.time),
+        fireAt: fireAt.getTime()
+      });
+    }
+  });
+
+  navigator.serviceWorker.controller.postMessage({
+    type: 'SCHEDULE_ALARMS',
+    alarms
+  });
+}
+
+// When a task is marked done, cancel its SW alarm too
+function cancelSwAlarm(id) {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_ALARM', id });
+  }
+}
   if ('Notification' in window && Notification.permission === 'granted') {
     const n = new Notification(title, {
       body: text,
@@ -593,6 +629,15 @@ document.addEventListener('click', function unlockAudio() {
   requestNotificationPermission();
 }, { once: true });
 
+// Re-schedule alarms whenever app comes back into view
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    checkDailyReset();
+    checkAlarms();
+    setTimeout(scheduleAlarmsInServiceWorker, 500);
+  }
+});
+
 loadLocal();
 render();
 updateClock();
@@ -601,7 +646,12 @@ setInterval(checkAlarms, 1000 * 20);
 setInterval(checkDailyReset, 1000 * 60);
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    // Wait for SW to be ready then schedule alarms
+    navigator.serviceWorker.ready.then(() => {
+      setTimeout(scheduleAlarmsInServiceWorker, 1000);
+    });
+  }).catch(() => {});
 }
 </script>
 

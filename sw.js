@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routine-cache-v2';
+const CACHE_NAME = 'routine-cache-v3';
 const FILES_TO_CACHE = ['./index.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -23,30 +23,56 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Background alarm check — fires every minute via message from main page
+// Store scheduled alarm timeouts
+const scheduledAlarms = new Map();
+
+// Schedule alarms sent from the main page
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'CHECK_ALARMS') {
+  if (event.data && event.data.type === 'SCHEDULE_ALARMS') {
     const alarms = event.data.alarms || [];
-    const now = event.data.now;
+
+    // Clear previously scheduled alarms
+    scheduledAlarms.forEach((timeoutId) => clearTimeout(timeoutId));
+    scheduledAlarms.clear();
+
+    const now = Date.now();
+
     alarms.forEach(alarm => {
-      self.registration.showNotification('⏰ ' + alarm.title, {
-        body: alarm.time + ' — tap to open the app and mark it done.',
-        icon: './icon.png',
-        badge: './icon.png',
-        requireInteraction: true,
-        vibrate: [400, 150, 400, 150, 400],
-        tag: alarm.id
-      });
+      const delay = alarm.fireAt - now;
+      if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
+        const timeoutId = setTimeout(() => {
+          self.registration.showNotification('⏰ ' + alarm.title, {
+            body: alarm.timeStr + ' — tap to open and mark it done.',
+            icon: './icon.png',
+            badge: './icon.png',
+            requireInteraction: true,
+            vibrate: [400, 150, 400, 150, 400, 150, 400],
+            tag: alarm.id,
+            renotify: true
+          });
+        }, delay);
+        scheduledAlarms.set(alarm.id, timeoutId);
+      }
     });
+  }
+
+  if (event.data && event.data.type === 'CANCEL_ALARM') {
+    const id = event.data.id;
+    if (scheduledAlarms.has(id)) {
+      clearTimeout(scheduledAlarms.get(id));
+      scheduledAlarms.delete(id);
+    }
   }
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      if (clientList.length > 0) {
-        return clientList[0].focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes('Rountines-tracker') && 'focus' in client) {
+          return client.focus();
+        }
       }
       return clients.openWindow('./');
     })
