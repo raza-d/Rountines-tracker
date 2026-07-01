@@ -457,17 +457,20 @@ document.getElementById('add-btn').addEventListener('click', () => {
 let audioCtx = null;
 let alarmInterval = null;
 
-function playAlarmSound(repeatCount) {
+async function playAlarmSound(repeatCount) {
   const count = repeatCount || 5;
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
     let ringIndex = 0;
     function playOneRing() {
-      if (ringIndex >= count) { clearInterval(alarmInterval); alarmInterval = null; return; }
+      if (ringIndex >= count) {
+        clearInterval(alarmInterval);
+        alarmInterval = null;
+        return;
+      }
       const now = audioCtx.currentTime;
-      // two-tone ring — di-dring sound, loud and clear
       [0, 0.22].forEach(offset => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -480,14 +483,13 @@ function playAlarmSound(repeatCount) {
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(now + offset);
-        osc.stop(now + offset + 0.42);
+        osc.stop(now + offset + 0.45);
       });
       ringIndex++;
     }
     playOneRing();
-    // ring every 1.5 seconds — total for 5 rings = ~7.5 seconds
     alarmInterval = setInterval(playOneRing, 1500);
-  } catch (e) {}
+  } catch (e) { console.error('Alarm error:', e); }
 }
 
 function stopAlarmSound() {
