@@ -283,8 +283,8 @@
     <option value="1">1 ring</option>
     <option value="2">2 rings</option>
     <option value="3">3 rings</option>
-    <option value="4" selected>4 rings</option>
-    <option value="5">5 rings</option>
+    <option value="4">4 rings</option>
+    <option value="5" selected>5 rings</option>
   </select>
   <button id="add-btn">Add to this day</button>
 </div>
@@ -455,36 +455,74 @@ document.getElementById('add-btn').addEventListener('click', () => {
 });
 
 let audioCtx = null;
+let alarmInterval = null;
+
 function playAlarmSound(repeatCount) {
-  const count = repeatCount || 4;
+  const count = repeatCount || 5;
+  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const now = audioCtx.currentTime;
-    for (let i = 0; i < count; i++) {
-      const offset = i * 0.25;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, now + offset);
-      gain.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.12);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now + offset);
-      osc.stop(now + offset + 0.14);
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    let ringIndex = 0;
+    function playOneRing() {
+      if (ringIndex >= count) { clearInterval(alarmInterval); alarmInterval = null; return; }
+      const now = audioCtx.currentTime;
+      // two-tone ring — di-dring sound, loud and clear
+      [0, 0.22].forEach(offset => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = offset === 0 ? 1200 : 900;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(1.0, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.6, now + offset + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.42);
+      });
+      ringIndex++;
     }
+    playOneRing();
+    // ring every 1.5 seconds — total for 5 rings = ~7.5 seconds
+    alarmInterval = setInterval(playOneRing, 1500);
   } catch (e) {}
+}
+
+function stopAlarmSound() {
+  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+}
+
+function sendSystemNotification(title, text) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const n = new Notification(title, {
+      body: text,
+      icon: './icon.png',
+      badge: './icon.png',
+      requireInteraction: true,
+      vibrate: [300, 100, 300, 100, 300]
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+  }
+}
+
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
 }
 
 function showPopup(title, text, repeatCount) {
   document.getElementById('popup-title').textContent = title;
   document.getElementById('popup-text').textContent = text;
   document.getElementById('popup-overlay').classList.add('active');
-  playAlarmSound(repeatCount);
+  playAlarmSound(repeatCount || 5);
+  sendSystemNotification(title, text);
 }
 document.getElementById('popup-close').addEventListener('click', () => {
   document.getElementById('popup-overlay').classList.remove('active');
+  stopAlarmSound();
 });
 
 function checkAlarms() {
@@ -496,15 +534,39 @@ function checkAlarms() {
   const dayTasks = tasksByDay[todayKey] || [];
   const dayDone = doneState[todayKey] || {};
   const fireKeyBase = todayStr() + '_' + nowStr;
+  const triggeredAlarms = [];
+
   dayTasks.forEach(t => {
     if (t.alarm && !dayDone[t.id] && t.time === nowStr) {
       const fireKey = fireKeyBase + '_' + t.id;
       if (!firedAlarms.has(fireKey)) {
         firedAlarms.add(fireKey);
-        showPopup('Time for: ' + t.title, formatTime(t.time) + ' — ' + DAY_LABELS[todayKey] + '. Mark it done once finished.', t.alarmRepeat);
+        triggeredAlarms.push({
+          id: t.id,
+          title: t.title,
+          time: formatTime(t.time),
+          repeatCount: t.alarmRepeat || 5
+        });
       }
     }
   });
+
+  if (triggeredAlarms.length > 0) {
+    // show in-app popup + sound if app is open
+    triggeredAlarms.forEach(a => {
+      showPopup('⏰ Time for: ' + a.title,
+        a.time + ' — ' + DAY_LABELS[todayKey] + '. Mark it done once finished.',
+        a.repeatCount);
+    });
+    // also send to service worker for system notification (works in background)
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CHECK_ALARMS',
+        alarms: triggeredAlarms,
+        now: nowStr
+      });
+    }
+  }
 }
 
 function updateClock() {
@@ -526,6 +588,7 @@ function checkDailyReset() {
 document.addEventListener('click', function unlockAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+  requestNotificationPermission();
 }, { once: true });
 
 loadLocal();
