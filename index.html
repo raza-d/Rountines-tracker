@@ -54,6 +54,7 @@
     margin-bottom: 16px;
     padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
+    min-height: 42px;
   }
   .day-tab {
     flex-shrink: 0;
@@ -291,7 +292,15 @@
   <div class="clock" id="clock"></div>
 </div>
 
-<div class="day-tabs" id="day-tabs"></div>
+<div class="day-tabs" id="day-tabs">
+  <button class="day-tab" onclick="setDay('mon')">Mon</button>
+  <button class="day-tab" onclick="setDay('tue')">Tue</button>
+  <button class="day-tab" onclick="setDay('wed')">Wed</button>
+  <button class="day-tab" onclick="setDay('thu')">Thu</button>
+  <button class="day-tab" onclick="setDay('fri')">Fri</button>
+  <button class="day-tab" onclick="setDay('sat')">Sat</button>
+  <button class="day-tab" onclick="setDay('sun')">Sun</button>
+</div>
 
 <div class="progress-wrap">
   <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim);">
@@ -395,16 +404,21 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 }
 
+function setDay(d) {
+  activeDay = d;
+  render();
+}
+
 function renderDayTabs() {
-  const wrap = document.getElementById('day-tabs');
-  wrap.innerHTML = '';
   const todayKey = currentDayKey();
-  DAYS.forEach(d => {
-    const btn = document.createElement('button');
-    btn.className = 'day-tab' + (d === activeDay ? ' active' : '') + (d === todayKey ? ' today' : '');
-    btn.textContent = DAY_LABELS[d].slice(0,3);
-    btn.addEventListener('click', () => { activeDay = d; render(); });
-    wrap.appendChild(btn);
+  const buttons = document.querySelectorAll('.day-tab');
+  DAYS.forEach((d, i) => {
+    const btn = buttons[i];
+    if (!btn) return;
+    btn.className = 'day-tab' +
+      (d === activeDay ? ' active' : '') +
+      (d === todayKey ? ' today' : '');
+    btn.onclick = () => setDay(d);
   });
 }
 
