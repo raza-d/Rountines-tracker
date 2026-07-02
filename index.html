@@ -203,15 +203,24 @@
     color: var(--text-dim);
     border: 1px solid var(--border);
   }
-  .del-btn {
-    background: transparent;
-    border: none;
+  .drag-handle {
+    cursor: grab;
     color: var(--text-dim);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
+    font-size: 18px;
+    padding: 4px 6px;
+    flex-shrink: 0;
+    user-select: none;
+    touch-action: none;
   }
-  .del-btn:hover { color: var(--danger); }
+  .drag-handle:active { cursor: grabbing; }
+  .task-card.dragging {
+    opacity: 0.4;
+    border-color: var(--orange);
+  }
+  .task-card.drag-over {
+    border-color: var(--orange);
+    background: var(--orange-dim);
+  }
   .empty {
     text-align: center;
     color: var(--text-dim);
@@ -385,22 +394,27 @@ function render() {
     empty.style.display = 'none';
   }
 
-  const sorted = [...dayTasks].sort((a,b) => a.time.localeCompare(b.time));
-  sorted.forEach(t => {
+  const sorted = [...dayTasks]; // preserve manual order, no auto-sort
+  sorted.forEach((t, index) => {
     const isDone = !!dayDone[t.id];
     const card = document.createElement('div');
     card.className = 'task-card' + (isDone ? ' done' : '');
+    card.setAttribute('draggable', 'true');
+    card.dataset.id = t.id;
+    card.dataset.index = index;
     card.innerHTML = `
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
       <button class="check-btn" data-id="${t.id}">${isDone ? '✓' : ''}</button>
       <div class="task-info">
         <div class="task-time">${formatTime(t.time)}</div>
         <div class="task-title">${escapeHtml(t.title)}</div>
       </div>
       <div class="task-actions">
-        <span class="alarm-badge ${t.alarm ? '' : 'off'}">${t.alarm ? (t.alarmRepeat || 4) + ' rings' : 'No alarm'}</span>
+        <span class="alarm-badge ${t.alarm ? '' : 'off'}">${t.alarm ? (t.alarmRepeat || 5) + ' rings' : 'No alarm'}</span>
         <button class="del-btn" data-id="${t.id}">✕</button>
       </div>
     `;
+    addDragEvents(card);
     list.appendChild(card);
   });
 
@@ -423,7 +437,87 @@ function escapeHtml(s) {
   return div.innerHTML;
 }
 
-document.getElementById('task-list').addEventListener('click', (e) => {
+let dragSrcId = null;
+let touchDragCard = null;
+let touchClone = null;
+let touchStartY = 0;
+
+function addDragEvents(card) {
+  const handle = card.querySelector('.drag-handle');
+
+  // Desktop drag
+  card.addEventListener('dragstart', (e) => {
+    dragSrcId = card.dataset.id;
+    setTimeout(() => card.classList.add('dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+  });
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (card.dataset.id !== dragSrcId) card.classList.add('drag-over');
+  });
+  card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    card.classList.remove('drag-over');
+    if (!dragSrcId || dragSrcId === card.dataset.id) return;
+    reorderTasks(dragSrcId, card.dataset.id);
+  });
+
+  // Touch drag — only trigger from handle
+  handle.addEventListener('touchstart', (e) => {
+    touchDragCard = card;
+    touchStartY = e.touches[0].clientY;
+    touchClone = card.cloneNode(true);
+    touchClone.style.cssText = `
+      position: fixed; z-index: 9999; opacity: 0.85; pointer-events: none;
+      width: ${card.offsetWidth}px; left: ${card.getBoundingClientRect().left}px;
+      top: ${card.getBoundingClientRect().top}px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    `;
+    document.body.appendChild(touchClone);
+    card.classList.add('dragging');
+    e.preventDefault();
+  }, { passive: false });
+
+  handle.addEventListener('touchmove', (e) => {
+    if (!touchClone) return;
+    const touch = e.touches[0];
+    touchClone.style.top = (touch.clientY - 30) + 'px';
+    e.preventDefault();
+  }, { passive: false });
+
+  handle.addEventListener('touchend', (e) => {
+    if (!touchClone || !touchDragCard) return;
+    const touch = e.changedTouches[0];
+    touchClone.remove();
+    touchClone = null;
+    touchDragCard.classList.remove('dragging');
+
+    // Find which card we dropped on
+    const cards = [...document.querySelectorAll('.task-card')];
+    const target = cards.find(c => {
+      const rect = c.getBoundingClientRect();
+      return touch.clientY >= rect.top && touch.clientY <= rect.bottom && c !== touchDragCard;
+    });
+    if (target) reorderTasks(touchDragCard.dataset.id, target.dataset.id);
+    touchDragCard = null;
+  });
+}
+
+function reorderTasks(srcId, targetId) {
+  const tasks = tasksByDay[activeDay];
+  const srcIdx = tasks.findIndex(t => t.id === srcId);
+  const targetIdx = tasks.findIndex(t => t.id === targetId);
+  if (srcIdx === -1 || targetIdx === -1) return;
+  const [removed] = tasks.splice(srcIdx, 1);
+  tasks.splice(targetIdx, 0, removed);
+  saveTasks();
+  render();
+}
+
   const id = e.target.getAttribute('data-id');
   if (!id) return;
   if (e.target.classList.contains('check-btn')) {
