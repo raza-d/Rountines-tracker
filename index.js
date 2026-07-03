@@ -1,78 +1,77 @@
-const CACHE_NAME = 'routine-cache-v4';
-const FILES_TO_CACHE = ['./index.html', './manifest.json', './icon.png'];
+const CACHE = 'routine-v5';
+const FILES = ['./index.html', './manifest.json', './icon.png'];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    ))
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((res) => res || fetch(event.request))
+// Cache first — always serve from cache, update in background
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const network = fetch(e.request).then(res => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => cached);
+      return cached || network;
+    })
   );
 });
 
-// Store scheduled alarm timeouts
-const scheduledAlarms = new Map();
+// Scheduled alarm timeouts
+const scheduled = new Map();
 
-// Schedule alarms sent from the main page
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SCHEDULE_ALARMS') {
-    const alarms = event.data.alarms || [];
-
-    // Clear previously scheduled alarms
-    scheduledAlarms.forEach((timeoutId) => clearTimeout(timeoutId));
-    scheduledAlarms.clear();
-
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SCHEDULE_ALARMS') {
+    scheduled.forEach(id => clearTimeout(id));
+    scheduled.clear();
     const now = Date.now();
-
-    alarms.forEach(alarm => {
-      const delay = alarm.fireAt - now;
-      if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
-        const timeoutId = setTimeout(() => {
-          self.registration.showNotification('⏰ ' + alarm.title, {
-            body: alarm.timeStr + ' — tap to open and mark it done.',
+    (e.data.alarms || []).forEach(a => {
+      const delay = a.fireAt - now;
+      if (delay > 0 && delay < 86400000) {
+        const tid = setTimeout(() => {
+          self.registration.showNotification('⏰ ' + a.title, {
+            body: a.timeStr + ' — tap to open the app.',
             icon: './icon.png',
             badge: './icon.png',
             requireInteraction: true,
-            vibrate: [400, 150, 400, 150, 400, 150, 400],
-            tag: alarm.id,
+            vibrate: [400, 150, 400, 150, 400],
+            tag: a.id,
             renotify: true
           });
         }, delay);
-        scheduledAlarms.set(alarm.id, timeoutId);
+        scheduled.set(a.id, tid);
       }
     });
   }
 
-  if (event.data && event.data.type === 'CANCEL_ALARM') {
-    const id = event.data.id;
-    if (scheduledAlarms.has(id)) {
-      clearTimeout(scheduledAlarms.get(id));
-      scheduledAlarms.delete(id);
+  if (e.data?.type === 'CANCEL_ALARM') {
+    if (scheduled.has(e.data.id)) {
+      clearTimeout(scheduled.get(e.data.id));
+      scheduled.delete(e.data.id);
     }
   }
 });
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url.includes('Rountines-tracker') && 'focus' in client) {
-          return client.focus();
-        }
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes('Rountines-tracker') && 'focus' in c) return c.focus();
       }
       return clients.openWindow('./');
     })

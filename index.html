@@ -7,286 +7,64 @@
 <title>My Weekly Routine</title>
 <link rel="manifest" href="manifest.json">
 <style>
-  :root {
-    --bg: #14171c;
-    --panel: #1b1f27;
-    --card: #20242e;
-    --card-done: #1c2b22;
-    --border: #2c313c;
-    --orange: #ff7a1a;
-    --orange-dim: #ff7a1a33;
-    --green: #34c77b;
-    --green-dim: #34c77b22;
-    --text: #eceef1;
-    --text-dim: #9aa0ab;
-    --danger: #ff5d5d;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    padding: 16px;
-    min-height: 100vh;
-  }
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .header h1 {
-    font-size: 19px;
-    margin: 0;
-    color: var(--orange);
-  }
-  .clock {
-    font-size: 13px;
-    color: var(--text-dim);
-  }
-  .day-tabs {
-    display: flex;
-    overflow-x: auto;
-    gap: 6px;
-    margin-bottom: 16px;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-    min-height: 42px;
-    width: 100%;
-  }
-  .day-tab {
-    flex-shrink: 0;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    white-space: nowrap;
-    display: inline-block;
-    min-width: 44px;
-    text-align: center;
-  }
-  .day-tab.active {
-    background: var(--orange-dim);
-    border-color: var(--orange);
-    color: var(--orange);
-    font-weight: 600;
-  }
-  .day-tab.today::after {
-    content: " •";
-    color: var(--orange);
-  }
-  .progress-wrap {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-  }
-  .progress-bar-bg {
-    background: #2a2f3a;
-    border-radius: 6px;
-    height: 8px;
-    overflow: hidden;
-    margin-top: 8px;
-  }
-  .progress-bar-fill {
-    background: var(--orange);
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s ease;
-  }
-  .add-form {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 18px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-  }
-  .add-form input[type="text"], .add-form input[type="time"] {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 10px;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-  .add-form input[type="text"] { flex: 1; min-width: 140px; }
-  .alarm-toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--text-dim);
-  }
-  .add-form button {
-    background: var(--orange);
-    border: none;
-    color: #1a1206;
-    font-weight: 600;
-    padding: 9px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  .add-form button:hover { opacity: 0.9; }
-  .task-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .task-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: background 0.2s, border-color 0.2s;
-  }
-  .task-card.done {
-    background: var(--card-done);
-    border-color: var(--green);
-  }
-  .check-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 2px solid var(--text-dim);
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    color: var(--green);
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .task-card.done .check-btn {
-    border-color: var(--green);
-    background: var(--green-dim);
-  }
-  .task-info { flex: 1; min-width: 0; }
-  .task-time {
-    font-size: 12px;
-    color: var(--orange);
-    font-weight: 600;
-  }
-  .task-title {
-    font-size: 15px;
-    margin-top: 2px;
-  }
-  .task-card.done .task-title {
-    text-decoration: line-through;
-    color: var(--text-dim);
-  }
-  .task-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .alarm-badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 12px;
-    background: var(--orange-dim);
-    color: var(--orange);
-    white-space: nowrap;
-  }
-  .alarm-badge.off {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-  }
-  .copy-all-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    cursor: pointer;
-    font-size: 11px;
-    padding: 3px 7px;
-    border-radius: 10px;
-    white-space: nowrap;
-  }
-  .copy-all-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .del-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
-  }
-  .del-btn:hover { color: var(--danger); }
-  .drag-handle {
-    cursor: grab;
-    color: var(--text-dim);
-    font-size: 18px;
-    padding: 4px 6px;
-    flex-shrink: 0;
-    user-select: none;
-    touch-action: none;
-  }
-  .drag-handle:active { cursor: grabbing; }
-  .task-card.dragging {
-    opacity: 0.4;
-    border-color: var(--orange);
-  }
-  .task-card.drag-over {
-    border-color: var(--orange);
-    background: var(--orange-dim);
-  }
-  .empty {
-    text-align: center;
-    color: var(--text-dim);
-    padding: 30px 0;
-    font-size: 14px;
-  }
-  .reset-note {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 18px;
-  }
-  .popup-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-  }
-  .popup-overlay.active { display: flex; }
-  .popup-box {
-    background: var(--panel);
-    border: 1px solid var(--orange);
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 320px;
-    text-align: center;
-  }
-  .popup-box h2 { color: var(--orange); margin: 0 0 8px; font-size: 18px; }
-  .popup-box p { margin: 0 0 16px; color: var(--text-dim); font-size: 14px; }
-  .popup-box button {
-    background: var(--orange);
-    border: none;
-    color: #1a1206;
-    font-weight: 600;
-    padding: 8px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
+:root {
+  --bg: #14171c; --panel: #1b1f27; --card: #20242e; --card-done: #1c2b22;
+  --border: #2c313c; --orange: #ff7a1a; --orange-dim: #ff7a1a33;
+  --green: #34c77b; --green-dim: #34c77b22; --text: #eceef1;
+  --text-dim: #9aa0ab; --danger: #ff5d5d;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 16px; min-height: 100vh; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.header h1 { font-size: 20px; color: var(--orange); }
+.clock { font-size: 13px; color: var(--text-dim); }
+.day-tabs { display: flex; overflow-x: auto; gap: 6px; margin-bottom: 14px; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+.day-tab { flex-shrink: 0; background: var(--panel); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.day-tab.active { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); font-weight: 600; }
+.day-tab.today { position: relative; }
+.day-tab.today::after { content: "•"; color: var(--orange); margin-left: 3px; }
+.progress-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; }
+.progress-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); margin-bottom: 8px; }
+.progress-bar-bg { background: #2a2f3a; border-radius: 6px; height: 8px; overflow: hidden; }
+.progress-bar-fill { background: var(--orange); height: 100%; width: 0%; transition: width 0.3s ease; }
+.add-form { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.add-form input[type="time"] { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 14px; font-family: inherit; }
+.add-form input[type="text"] { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 14px; flex: 1; min-width: 140px; font-family: inherit; }
+.add-form input::placeholder { color: var(--text-dim); }
+.alarm-wrap { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-dim); }
+.ring-select { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 7px 6px; border-radius: 6px; font-size: 13px; font-family: inherit; }
+.add-btn { background: var(--orange); border: none; color: #1a1206; font-weight: 600; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit; }
+.task-list { display: flex; flex-direction: column; gap: 10px; }
+.task-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; transition: background 0.2s, border-color 0.2s; }
+.task-card.done { background: var(--card-done); border-color: var(--green); }
+.task-card.dragging { opacity: 0.4; border-color: var(--orange); }
+.task-card.drag-over { border-color: var(--orange); background: var(--orange-dim); }
+.drag-handle { cursor: grab; color: var(--text-dim); font-size: 16px; flex-shrink: 0; user-select: none; touch-action: none; padding: 2px 4px; }
+.check-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--text-dim); background: transparent; cursor: pointer; flex-shrink: 0; color: var(--green); font-size: 14px; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+.task-card.done .check-btn { border-color: var(--green); background: var(--green-dim); }
+.task-info { flex: 1; min-width: 0; }
+.task-time { font-size: 12px; color: var(--orange); font-weight: 600; }
+.task-title { font-size: 15px; margin-top: 2px; word-break: break-word; }
+.task-card.done .task-title { text-decoration: line-through; color: var(--text-dim); }
+.task-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.alarm-badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; background: var(--orange-dim); color: var(--orange); white-space: nowrap; }
+.alarm-badge.off { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.all-days-btn { font-size: 11px; padding: 3px 8px; border-radius: 12px; background: transparent; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; white-space: nowrap; font-family: inherit; }
+.all-days-btn:hover { border-color: var(--orange); color: var(--orange); }
+.del-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 2px 4px; font-family: inherit; }
+.del-btn:hover { color: var(--danger); }
+.empty { text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 14px; }
+.reset-note { text-align: center; font-size: 12px; color: var(--text-dim); margin-top: 18px; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
+.overlay.active { display: flex; }
+.popup-box { background: var(--panel); border: 1px solid var(--orange); border-radius: 12px; padding: 24px; max-width: 320px; width: 100%; text-align: center; }
+.popup-box h2 { color: var(--orange); margin-bottom: 8px; font-size: 17px; }
+.popup-box p { margin-bottom: 16px; color: var(--text-dim); font-size: 14px; line-height: 1.5; }
+.popup-btns { display: flex; gap: 10px; justify-content: center; }
+.popup-btns button { border: none; font-weight: 600; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; }
+.btn-green { background: var(--green); color: #0d1f15; }
+.btn-orange { background: var(--orange); color: #1a1206; }
+.btn-ghost { background: var(--card); color: var(--text); border: 1px solid var(--border) !important; }
 </style>
 </head>
 <body>
@@ -296,18 +74,10 @@
   <div class="clock" id="clock"></div>
 </div>
 
-<div class="day-tabs" id="day-tabs">
-  <button class="day-tab" onclick="setDay('mon')">Mon</button>
-  <button class="day-tab" onclick="setDay('tue')">Tue</button>
-  <button class="day-tab" onclick="setDay('wed')">Wed</button>
-  <button class="day-tab" onclick="setDay('thu')">Thu</button>
-  <button class="day-tab" onclick="setDay('fri')">Fri</button>
-  <button class="day-tab" onclick="setDay('sat')">Sat</button>
-  <button class="day-tab" onclick="setDay('sun')">Sun</button>
-</div>
+<div class="day-tabs" id="day-tabs"></div>
 
 <div class="progress-wrap">
-  <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim);">
+  <div class="progress-top">
     <span id="progress-label">Progress</span>
     <span id="progress-text">0 / 0 done</span>
   </div>
@@ -317,186 +87,220 @@
 <div class="add-form">
   <input type="time" id="time-input">
   <input type="text" id="title-input" placeholder="Task name e.g. Fajr prayer, Gym">
-  <label class="alarm-toggle-wrap">
-    <input type="checkbox" id="alarm-input">
-    Alarm
+  <label class="alarm-wrap">
+    <input type="checkbox" id="alarm-input"> Alarm
   </label>
-  <select id="alarm-repeat-input" style="background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 6px; border-radius: 6px; font-size: 13px;">
+  <select class="ring-select" id="ring-input">
     <option value="1">1 ring</option>
     <option value="2">2 rings</option>
     <option value="3">3 rings</option>
     <option value="4">4 rings</option>
     <option value="5" selected>5 rings</option>
   </select>
-  <button id="add-btn">Add to this day</button>
+  <button class="add-btn" id="add-btn">Add to this day</button>
 </div>
 
 <div class="task-list" id="task-list"></div>
-<div class="empty" id="empty-state" style="display:none;"></div>
+<div class="empty" id="empty-msg" style="display:none;"></div>
+<div class="reset-note">Each day resets at midnight. Week loops Mon → Sun.</div>
 
-<div class="reset-note">Each day's checklist resets at midnight. Full week loops Monday → Sunday.</div>
-
-<div class="popup-overlay" id="copy-confirm-overlay">
+<!-- Alarm popup -->
+<div class="overlay" id="alarm-overlay">
   <div class="popup-box">
-    <h2 style="font-size:16px;" id="copy-confirm-title">Copy to all 7 days?</h2>
-    <p id="copy-confirm-text">This task will be added to every day of the week.</p>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button id="copy-confirm-yes" style="background:var(--green); color:#0d1f15;">Yes, apply</button>
-      <button id="copy-confirm-no" style="background:var(--card); color:var(--text); border:1px solid var(--border);">Cancel</button>
+    <h2 id="alarm-title">⏰ Reminder</h2>
+    <p id="alarm-text"></p>
+    <div class="popup-btns"><button class="btn-orange" id="alarm-close">Got it</button></div>
+  </div>
+</div>
+
+<!-- Copy-to-all-days popup -->
+<div class="overlay" id="copy-overlay">
+  <div class="popup-box">
+    <h2>Apply to all 7 days?</h2>
+    <p id="copy-text"></p>
+    <div class="popup-btns">
+      <button class="btn-green" id="copy-yes">Yes, apply</button>
+      <button class="btn-ghost" id="copy-no">Cancel</button>
     </div>
   </div>
 </div>
 
-<div class="popup-overlay" id="popup-overlay">
-  <div class="popup-box">
-    <h2 id="popup-title">Reminder</h2>
-    <p id="popup-text">It's time.</p>
-    <button id="popup-close">Got it</button>
-  </div>
-</div>
-
 <script>
-const STORAGE_KEY = 'weekly_routine_tasks_v1';
-const DONE_KEY = 'weekly_routine_done_v1';
-const LAST_DONE_DATE_KEY = 'weekly_routine_last_done_date';
+const TASK_KEY = 'wr_tasks_v2';
+const DONE_KEY = 'wr_done_v2';
+const DATE_KEY = 'wr_date_v2';
 const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
-const DAY_LABELS = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday', sun:'Sunday' };
+const LABELS = {mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 
-let tasksByDay = {};
-let doneState = {};
-let activeDay = currentDayKey();
+let tasks = {};
+let done = {};
+let activeDay = todayKey();
+let dragSrcId = null;
+let touchCard = null;
+let touchClone = null;
+let alarmInterval = null;
+let audioCtx = null;
+let copyTask = null;
 let firedAlarms = new Set();
 
-function currentDayKey() {
-  const jsDay = new Date().getDay();
-  const map = ['sun','mon','tue','wed','thu','fri','sat'];
-  return map[jsDay];
+// ── Helpers ──────────────────────────────────────────────
+function todayKey() {
+  return ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
 }
-
-function todayStr() {
-  return new Date().toISOString().slice(0,10);
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmt(t) {
+  const [h,m] = t.split(':').map(Number);
+  return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
 }
+function safe(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    tasksByDay = raw ? JSON.parse(raw) : {};
-  } catch(e) { tasksByDay = {}; }
-  DAYS.forEach(d => { if (!tasksByDay[d]) tasksByDay[d] = []; });
-
-  try {
-    const raw2 = localStorage.getItem(DONE_KEY);
-    doneState = raw2 ? JSON.parse(raw2) : {};
-  } catch(e) { doneState = {}; }
-
-  const lastDoneDate = localStorage.getItem(LAST_DONE_DATE_KEY);
-  if (lastDoneDate !== todayStr()) {
-    doneState[currentDayKey()] = {};
-    localStorage.setItem(LAST_DONE_DATE_KEY, todayStr());
+// ── Storage ───────────────────────────────────────────────
+function load() {
+  try { tasks = JSON.parse(localStorage.getItem(TASK_KEY)) || {}; } catch(e) { tasks = {}; }
+  try { done  = JSON.parse(localStorage.getItem(DONE_KEY))  || {}; } catch(e) { done  = {}; }
+  DAYS.forEach(d => { if (!tasks[d]) tasks[d] = []; if (!done[d]) done[d] = {}; });
+  const last = localStorage.getItem(DATE_KEY);
+  if (last !== todayStr()) {
+    done[todayKey()] = {};
+    localStorage.setItem(DATE_KEY, todayStr());
     saveDone();
+    firedAlarms.clear();
   }
 }
+function saveTasks() { localStorage.setItem(TASK_KEY, JSON.stringify(tasks)); }
+function saveDone()  { localStorage.setItem(DONE_KEY,  JSON.stringify(done));  }
 
-function saveTasks() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasksByDay));
-}
-function saveDone() {
-  localStorage.setItem(DONE_KEY, JSON.stringify(doneState));
-}
-
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+// ── Render ────────────────────────────────────────────────
+function render() {
+  renderTabs();
+  renderTasks();
+  renderProgress();
 }
 
-function setDay(d) {
-  activeDay = d;
-  render();
-}
-
-function renderDayTabs() {
-  const todayKey = currentDayKey();
-  const buttons = document.querySelectorAll('.day-tab');
-  DAYS.forEach((d, i) => {
-    const btn = buttons[i];
-    if (!btn) return;
-    btn.className = 'day-tab' +
-      (d === activeDay ? ' active' : '') +
-      (d === todayKey ? ' today' : '');
-    btn.onclick = () => setDay(d);
+function renderTabs() {
+  const today = todayKey();
+  const wrap = document.getElementById('day-tabs');
+  wrap.innerHTML = '';
+  DAYS.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (d===activeDay?' active':'') + (d===today?' today':'');
+    btn.textContent = LABELS[d].slice(0,3);
+    btn.onclick = () => { activeDay = d; render(); };
+    wrap.appendChild(btn);
   });
 }
 
-function render() {
-  renderDayTabs();
-  document.getElementById('progress-label').textContent = DAY_LABELS[activeDay] + (activeDay === currentDayKey() ? ' (today)' : '');
-
+function renderTasks() {
   const list = document.getElementById('task-list');
-  const empty = document.getElementById('empty-state');
+  const empty = document.getElementById('empty-msg');
+  const dayTasks = tasks[activeDay] || [];
+  const dayDone  = done[activeDay]  || {};
   list.innerHTML = '';
-  const dayTasks = tasksByDay[activeDay] || [];
-  const dayDone = doneState[activeDay] || {};
+  document.getElementById('progress-label').textContent = LABELS[activeDay] + (activeDay===todayKey()?' (today)':'');
 
   if (dayTasks.length === 0) {
     empty.style.display = 'block';
-    empty.textContent = `No tasks for ${DAY_LABELS[activeDay]} yet. Add one above.`;
-  } else {
-    empty.style.display = 'none';
+    empty.textContent = `No tasks for ${LABELS[activeDay]} yet. Add one above.`;
+    return;
   }
+  empty.style.display = 'none';
 
-  const sorted = [...dayTasks]; // preserve manual order, no auto-sort
-  sorted.forEach((t, index) => {
+  dayTasks.forEach((t, idx) => {
     const isDone = !!dayDone[t.id];
     const card = document.createElement('div');
-    card.className = 'task-card' + (isDone ? ' done' : '');
-    card.setAttribute('draggable', 'true');
+    card.className = 'task-card' + (isDone?' done':'');
+    card.draggable = true;
     card.dataset.id = t.id;
-    card.dataset.index = index;
+    card.dataset.idx = idx;
     card.innerHTML = `
-      <span class="drag-handle" title="Drag to reorder">⠿</span>
-      <button class="check-btn" data-id="${t.id}">${isDone ? '✓' : ''}</button>
+      <span class="drag-handle">⠿</span>
+      <button class="check-btn" data-action="check" data-id="${t.id}">${isDone?'✓':''}</button>
       <div class="task-info">
-        <div class="task-time">${formatTime(t.time)}</div>
-        <div class="task-title">${escapeHtml(t.title)}</div>
+        <div class="task-time">${fmt(t.time)}</div>
+        <div class="task-title">${safe(t.title)}</div>
       </div>
       <div class="task-actions">
-        <span class="alarm-badge ${t.alarm ? '' : 'off'}">${t.alarm ? (t.alarmRepeat || 5) + ' rings' : 'No alarm'}</span>
-        <button class="copy-all-btn" data-id="${t.id}" title="Copy to all 7 days">All days</button>
-        <button class="del-btn" data-id="${t.id}">✕</button>
-      </div>
-    `;
-    addDragEvents(card);
+        <span class="alarm-badge${t.alarm?'':' off'}">${t.alarm?(t.rings||5)+' rings':'No alarm'}</span>
+        <button class="all-days-btn" data-action="alldays" data-id="${t.id}">All days</button>
+        <button class="del-btn" data-action="del" data-id="${t.id}">✕</button>
+      </div>`;
+    addDrag(card);
     list.appendChild(card);
   });
-
-  const doneCount = sorted.filter(t => dayDone[t.id]).length;
-  document.getElementById('progress-text').textContent = `${doneCount} / ${sorted.length} done`;
-  const pct = sorted.length ? (doneCount / sorted.length) * 100 : 0;
-  document.getElementById('progress-fill').style.width = pct + '%';
 }
 
-function formatTime(t) {
-  const [h,m] = t.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+function renderProgress() {
+  const dayTasks = tasks[activeDay] || [];
+  const dayDone  = done[activeDay]  || {};
+  const doneCount = dayTasks.filter(t => dayDone[t.id]).length;
+  document.getElementById('progress-text').textContent = `${doneCount} / ${dayTasks.length} done`;
+  document.getElementById('progress-fill').style.width = dayTasks.length ? (doneCount/dayTasks.length*100)+'%' : '0%';
 }
 
-function escapeHtml(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}
+// ── Task actions ──────────────────────────────────────────
+document.getElementById('task-list').addEventListener('click', e => {
+  const action = e.target.dataset.action;
+  const id = e.target.dataset.id;
+  if (!action || !id) return;
 
-let dragSrcId = null;
-let touchDragCard = null;
-let touchClone = null;
-let touchStartY = 0;
+  if (action === 'check') {
+    if (!done[activeDay]) done[activeDay] = {};
+    done[activeDay][id] = !done[activeDay][id];
+    if (done[activeDay][id]) swCancel(id);
+    saveDone(); render();
 
-function addDragEvents(card) {
+  } else if (action === 'del') {
+    tasks[activeDay] = (tasks[activeDay]||[]).filter(t => t.id !== id);
+    if (done[activeDay]) delete done[activeDay][id];
+    saveTasks(); saveDone(); render();
+
+  } else if (action === 'alldays') {
+    copyTask = (tasks[activeDay]||[]).find(t => t.id === id);
+    if (!copyTask) return;
+    document.getElementById('copy-text').textContent = `"${copyTask.title}" at ${fmt(copyTask.time)} will be added to all 7 days.`;
+    document.getElementById('copy-overlay').classList.add('active');
+  }
+});
+
+document.getElementById('copy-yes').onclick = () => {
+  document.getElementById('copy-overlay').classList.remove('active');
+  if (!copyTask) return;
+  DAYS.forEach(d => {
+    if (d === activeDay) return;
+    if (!tasks[d]) tasks[d] = [];
+    const exists = tasks[d].some(t => t.title===copyTask.title && t.time===copyTask.time);
+    if (!exists) tasks[d].push({ id:uid(), time:copyTask.time, title:copyTask.title, alarm:copyTask.alarm, rings:copyTask.rings });
+  });
+  saveTasks(); swSchedule(); render();
+  copyTask = null;
+};
+document.getElementById('copy-no').onclick = () => {
+  document.getElementById('copy-overlay').classList.remove('active');
+  copyTask = null;
+};
+
+// ── Add task ──────────────────────────────────────────────
+document.getElementById('add-btn').addEventListener('click', () => {
+  const time  = document.getElementById('time-input').value;
+  const title = document.getElementById('title-input').value.trim();
+  const alarm = document.getElementById('alarm-input').checked;
+  const rings = parseInt(document.getElementById('ring-input').value, 10);
+  if (!time || !title) return;
+  if (!tasks[activeDay]) tasks[activeDay] = [];
+  tasks[activeDay].push({ id:uid(), time, title, alarm, rings });
+  saveTasks();
+  document.getElementById('title-input').value = '';
+  document.getElementById('alarm-input').checked = false;
+  render();
+  swSchedule();
+});
+
+// ── Drag & drop ───────────────────────────────────────────
+function addDrag(card) {
   const handle = card.querySelector('.drag-handle');
 
-  // Desktop drag
-  card.addEventListener('dragstart', (e) => {
+  card.addEventListener('dragstart', e => {
     dragSrcId = card.dataset.id;
     setTimeout(() => card.classList.add('dragging'), 0);
     e.dataTransfer.effectAllowed = 'move';
@@ -505,337 +309,183 @@ function addDragEvents(card) {
     card.classList.remove('dragging');
     document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
   });
-  card.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    if (card.dataset.id !== dragSrcId) card.classList.add('drag-over');
-  });
+  card.addEventListener('dragover', e => { e.preventDefault(); if (card.dataset.id!==dragSrcId) card.classList.add('drag-over'); });
   card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-  card.addEventListener('drop', (e) => {
+  card.addEventListener('drop', e => {
     e.preventDefault();
     card.classList.remove('drag-over');
-    if (!dragSrcId || dragSrcId === card.dataset.id) return;
-    reorderTasks(dragSrcId, card.dataset.id);
+    if (!dragSrcId || dragSrcId===card.dataset.id) return;
+    reorder(dragSrcId, card.dataset.id);
   });
 
-  // Touch drag — only trigger from handle
-  handle.addEventListener('touchstart', (e) => {
-    touchDragCard = card;
-    touchStartY = e.touches[0].clientY;
+  handle.addEventListener('touchstart', e => {
+    touchCard = card;
     touchClone = card.cloneNode(true);
-    touchClone.style.cssText = `
-      position: fixed; z-index: 9999; opacity: 0.85; pointer-events: none;
-      width: ${card.offsetWidth}px; left: ${card.getBoundingClientRect().left}px;
-      top: ${card.getBoundingClientRect().top}px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    `;
+    const rect = card.getBoundingClientRect();
+    touchClone.style.cssText = `position:fixed;z-index:9999;opacity:0.85;pointer-events:none;width:${rect.width}px;left:${rect.left}px;top:${rect.top}px;box-shadow:0 8px 24px rgba(0,0,0,0.5);`;
     document.body.appendChild(touchClone);
     card.classList.add('dragging');
     e.preventDefault();
-  }, { passive: false });
+  }, { passive:false });
 
-  handle.addEventListener('touchmove', (e) => {
+  handle.addEventListener('touchmove', e => {
     if (!touchClone) return;
-    const touch = e.touches[0];
-    touchClone.style.top = (touch.clientY - 30) + 'px';
+    touchClone.style.top = (e.touches[0].clientY - 30) + 'px';
     e.preventDefault();
-  }, { passive: false });
+  }, { passive:false });
 
-  handle.addEventListener('touchend', (e) => {
-    if (!touchClone || !touchDragCard) return;
+  handle.addEventListener('touchend', e => {
+    if (!touchClone || !touchCard) return;
     const touch = e.changedTouches[0];
-    touchClone.remove();
-    touchClone = null;
-    touchDragCard.classList.remove('dragging');
-
-    // Find which card we dropped on
-    const cards = [...document.querySelectorAll('.task-card')];
-    const target = cards.find(c => {
-      const rect = c.getBoundingClientRect();
-      return touch.clientY >= rect.top && touch.clientY <= rect.bottom && c !== touchDragCard;
+    touchClone.remove(); touchClone = null;
+    touchCard.classList.remove('dragging');
+    const all = [...document.querySelectorAll('.task-card')];
+    const target = all.find(c => {
+      const r = c.getBoundingClientRect();
+      return touch.clientY>=r.top && touch.clientY<=r.bottom && c!==touchCard;
     });
-    if (target) reorderTasks(touchDragCard.dataset.id, target.dataset.id);
-    touchDragCard = null;
+    if (target) reorder(touchCard.dataset.id, target.dataset.id);
+    touchCard = null;
   });
 }
 
-function reorderTasks(srcId, targetId) {
-  const tasks = tasksByDay[activeDay];
-  const srcIdx = tasks.findIndex(t => t.id === srcId);
-  const targetIdx = tasks.findIndex(t => t.id === targetId);
-  if (srcIdx === -1 || targetIdx === -1) return;
-  const [removed] = tasks.splice(srcIdx, 1);
-  tasks.splice(targetIdx, 0, removed);
-  saveTasks();
-  render();
+function reorder(srcId, tgtId) {
+  const arr = tasks[activeDay];
+  const si = arr.findIndex(t => t.id===srcId);
+  const ti = arr.findIndex(t => t.id===tgtId);
+  if (si<0||ti<0) return;
+  const [r] = arr.splice(si,1);
+  arr.splice(ti,0,r);
+  saveTasks(); render();
 }
 
-document.getElementById('task-list').addEventListener('click', (e) => {
-  const id = e.target.getAttribute('data-id');
-  if (!id) return;
-  if (e.target.classList.contains('check-btn')) {
-    if (!doneState[activeDay]) doneState[activeDay] = {};
-    doneState[activeDay][id] = !doneState[activeDay][id];
-    if (doneState[activeDay][id]) cancelSwAlarm(id);
-    saveDone();
-    render();
-  } else if (e.target.classList.contains('del-btn')) {
-    tasksByDay[activeDay] = tasksByDay[activeDay].filter(x => x.id !== id);
-    if (doneState[activeDay]) delete doneState[activeDay][id];
-    saveTasks();
-    saveDone();
-    render();
-  } else if (e.target.classList.contains('copy-all-btn')) {
-    const srcTask = (tasksByDay[activeDay] || []).find(x => x.id === id);
-    if (!srcTask) return;
-    showCopyConfirm(srcTask);
-  }
-});
-
-document.getElementById('add-btn').addEventListener('click', () => {
-  const time = document.getElementById('time-input').value;
-  const title = document.getElementById('title-input').value.trim();
-  const alarm = document.getElementById('alarm-input').checked;
-  const alarmRepeat = parseInt(document.getElementById('alarm-repeat-input').value, 10) || 4;
-  if (!time || !title) return;
-  if (!tasksByDay[activeDay]) tasksByDay[activeDay] = [];
-  tasksByDay[activeDay].push({ id: uid(), time, title, alarm, alarmRepeat });
-  saveTasks();
-  document.getElementById('title-input').value = '';
-  document.getElementById('alarm-input').checked = false;
-  render();
-  setTimeout(scheduleAlarmsInServiceWorker, 300);
-});
-
-let audioCtx = null;
-let alarmInterval = null;
-
-async function playAlarmSound(repeatCount) {
-  const count = repeatCount || 5;
+// ── Audio ─────────────────────────────────────────────────
+async function playAlarm(rings) {
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
-    let ringIndex = 0;
-    function playOneRing() {
-      if (ringIndex >= count) {
-        clearInterval(alarmInterval);
-        alarmInterval = null;
-        return;
-      }
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state==='suspended') await audioCtx.resume();
+    let i = 0;
+    function ring() {
+      if (i >= rings) { clearInterval(alarmInterval); alarmInterval=null; return; }
       const now = audioCtx.currentTime;
       [0, 0.22].forEach(offset => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
-        osc.frequency.value = offset === 0 ? 1200 : 900;
-        gain.gain.setValueAtTime(0.0001, now + offset);
-        gain.gain.exponentialRampToValueAtTime(1.0, now + offset + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.6, now + offset + 0.2);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.4);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now + offset);
-        osc.stop(now + offset + 0.45);
+        osc.frequency.value = offset===0 ? 1200 : 900;
+        gain.gain.setValueAtTime(0.0001, now+offset);
+        gain.gain.exponentialRampToValueAtTime(1.0, now+offset+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.6, now+offset+0.2);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now+offset+0.4);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now+offset); osc.stop(now+offset+0.45);
       });
-      ringIndex++;
+      i++;
     }
-    playOneRing();
-    alarmInterval = setInterval(playOneRing, 1500);
-  } catch (e) { console.error('Alarm error:', e); }
+    ring();
+    alarmInterval = setInterval(ring, 1500);
+  } catch(e) {}
 }
+function stopAlarm() { if (alarmInterval) { clearInterval(alarmInterval); alarmInterval=null; } }
 
-function stopAlarmSound() {
-  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
-}
-
-function scheduleAlarmsInServiceWorker() {
-  if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
-  const todayKey = currentDayKey();
-  const dayTasks = tasksByDay[todayKey] || [];
-  const dayDone = doneState[todayKey] || {};
-  const now = new Date();
-  const alarms = [];
-
-  dayTasks.forEach(t => {
-    if (!t.alarm || dayDone[t.id]) return;
-    const [h, m] = t.time.split(':').map(Number);
-    const fireAt = new Date();
-    fireAt.setHours(h, m, 0, 0);
-    if (fireAt > now) {
-      alarms.push({
-        id: t.id,
-        title: t.title,
-        timeStr: formatTime(t.time),
-        fireAt: fireAt.getTime()
-      });
-    }
-  });
-
-  navigator.serviceWorker.controller.postMessage({
-    type: 'SCHEDULE_ALARMS',
-    alarms
-  });
-}
-
-// When a task is marked done, cancel its SW alarm too
-function cancelSwAlarm(id) {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_ALARM', id });
-  }
-}
-
-function sendSystemNotification(title, text) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    const n = new Notification(title, {
-      body: text,
-      icon: './icon.png',
-      badge: './icon.png',
-      requireInteraction: true,
-      vibrate: [300, 100, 300, 100, 300]
-    });
+// ── Alarm popup ───────────────────────────────────────────
+function showAlarm(title, text, rings) {
+  document.getElementById('alarm-title').textContent = '⏰ ' + title;
+  document.getElementById('alarm-text').textContent = text;
+  document.getElementById('alarm-overlay').classList.add('active');
+  playAlarm(rings||5);
+  if (Notification.permission==='granted') {
+    const n = new Notification('⏰ '+title, { body:text, icon:'./icon.png', requireInteraction:true, vibrate:[400,150,400,150,400] });
     n.onclick = () => { window.focus(); n.close(); };
   }
 }
+document.getElementById('alarm-close').onclick = () => {
+  document.getElementById('alarm-overlay').classList.remove('active');
+  stopAlarm();
+};
 
-function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-function showCopyConfirm(srcTask) {
-  document.getElementById('copy-confirm-title').textContent = `Copy "${srcTask.title}" to all 7 days?`;
-  document.getElementById('copy-confirm-text').textContent = `${formatTime(srcTask.time)} — will be added to Mon, Tue, Wed, Thu, Fri, Sat, Sun.`;
-  document.getElementById('copy-confirm-overlay').classList.add('active');
-
-  document.getElementById('copy-confirm-yes').onclick = () => {
-    document.getElementById('copy-confirm-overlay').classList.remove('active');
-    DAYS.forEach(day => {
-      if (day === activeDay) return;
-      if (!tasksByDay[day]) tasksByDay[day] = [];
-      const alreadyExists = tasksByDay[day].some(t => t.title === srcTask.title && t.time === srcTask.time);
-      if (!alreadyExists) {
-        tasksByDay[day].push({
-          id: uid(),
-          time: srcTask.time,
-          title: srcTask.title,
-          alarm: srcTask.alarm,
-          alarmRepeat: srcTask.alarmRepeat
-        });
-      }
-    });
-    saveTasks();
-    scheduleAlarmsInServiceWorker();
-    render();
-  };
-
-  document.getElementById('copy-confirm-no').onclick = () => {
-    document.getElementById('copy-confirm-overlay').classList.remove('active');
-  };
-}
-
-function showPopup(title, text, repeatCount) {
-  document.getElementById('popup-title').textContent = title;
-  document.getElementById('popup-text').textContent = text;
-  document.getElementById('popup-overlay').classList.add('active');
-  playAlarmSound(repeatCount || 5);
-  sendSystemNotification(title, text);
-}
-document.getElementById('popup-close').addEventListener('click', () => {
-  document.getElementById('popup-overlay').classList.remove('active');
-  stopAlarmSound();
-});
-
+// ── Alarm check ───────────────────────────────────────────
 function checkAlarms() {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2,'0');
   const mm = String(now.getMinutes()).padStart(2,'0');
-  const nowStr = `${hh}:${mm}`;
-  const todayKey = currentDayKey();
-  const dayTasks = tasksByDay[todayKey] || [];
-  const dayDone = doneState[todayKey] || {};
-  const fireKeyBase = todayStr() + '_' + nowStr;
-  const triggeredAlarms = [];
-
+  const nowStr = hh+':'+mm;
+  const today = todayKey();
+  const dayTasks = tasks[today] || [];
+  const dayDone  = done[today]  || {};
+  const base = todayStr()+'_'+nowStr;
+  const triggered = [];
   dayTasks.forEach(t => {
-    if (t.alarm && !dayDone[t.id] && t.time === nowStr) {
-      const fireKey = fireKeyBase + '_' + t.id;
-      if (!firedAlarms.has(fireKey)) {
-        firedAlarms.add(fireKey);
-        triggeredAlarms.push({
-          id: t.id,
-          title: t.title,
-          time: formatTime(t.time),
-          repeatCount: t.alarmRepeat || 5
-        });
+    if (t.alarm && !dayDone[t.id] && t.time===nowStr) {
+      const key = base+'_'+t.id;
+      if (!firedAlarms.has(key)) {
+        firedAlarms.add(key);
+        triggered.push(t);
       }
     }
   });
-
-  if (triggeredAlarms.length > 0) {
-    // show in-app popup + sound if app is open
-    triggeredAlarms.forEach(a => {
-      showPopup('⏰ Time for: ' + a.title,
-        a.time + ' — ' + DAY_LABELS[todayKey] + '. Mark it done once finished.',
-        a.repeatCount);
-    });
-    // also send to service worker for system notification (works in background)
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CHECK_ALARMS',
-        alarms: triggeredAlarms,
-        now: nowStr
-      });
-    }
+  if (triggered.length > 0) {
+    const t = triggered[0];
+    showAlarm('Time for: '+t.title, fmt(t.time)+' — '+LABELS[today]+'. Mark it done once finished.', t.rings);
   }
 }
 
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
-}
-
-function checkDailyReset() {
-  const lastDoneDate = localStorage.getItem(LAST_DONE_DATE_KEY);
-  if (lastDoneDate !== todayStr()) {
-    doneState[currentDayKey()] = {};
-    localStorage.setItem(LAST_DONE_DATE_KEY, todayStr());
+function checkReset() {
+  const last = localStorage.getItem(DATE_KEY);
+  if (last !== todayStr()) {
+    done[todayKey()] = {};
+    localStorage.setItem(DATE_KEY, todayStr());
     firedAlarms.clear();
-    saveDone();
-    if (activeDay === currentDayKey()) render();
+    saveDone(); render(); swSchedule();
   }
 }
 
-document.addEventListener('click', function unlockAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  requestNotificationPermission();
-}, { once: true });
+// ── Service Worker ────────────────────────────────────────
+function swSchedule() {
+  if (!navigator.serviceWorker?.controller) return;
+  const today = todayKey();
+  const dayTasks = tasks[today] || [];
+  const dayDone  = done[today]  || {};
+  const now = Date.now();
+  const alarms = dayTasks.filter(t => t.alarm && !dayDone[t.id]).map(t => {
+    const [h,m] = t.time.split(':').map(Number);
+    const fireAt = new Date(); fireAt.setHours(h,m,0,0);
+    return { id:t.id, title:t.title, timeStr:fmt(t.time), fireAt:fireAt.getTime() };
+  }).filter(a => a.fireAt > now);
+  navigator.serviceWorker.controller.postMessage({ type:'SCHEDULE_ALARMS', alarms });
+}
+function swCancel(id) {
+  if (navigator.serviceWorker?.controller) navigator.serviceWorker.controller.postMessage({ type:'CANCEL_ALARM', id });
+}
 
-// Re-schedule alarms whenever app comes back into view
+// ── Clock ─────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleString([], { weekday:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── Unlock audio on first tap ─────────────────────────────
+document.addEventListener('click', () => {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if (audioCtx.state==='suspended') audioCtx.resume();
+  if (Notification.permission==='default') Notification.requestPermission();
+}, { once:true });
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    checkDailyReset();
-    checkAlarms();
-    setTimeout(scheduleAlarmsInServiceWorker, 500);
-  }
+  if (document.visibilityState==='visible') { checkReset(); checkAlarms(); setTimeout(swSchedule, 500); }
 });
 
-loadLocal();
-render();
-updateClock();
-setInterval(updateClock, 1000 * 30);
-setInterval(checkAlarms, 1000 * 20);
-setInterval(checkDailyReset, 1000 * 60);
+// ── Init ──────────────────────────────────────────────────
+load(); render(); updateClock();
+setInterval(updateClock, 30000);
+setInterval(checkAlarms, 20000);
+setInterval(checkReset, 60000);
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    // Wait for SW to be ready then schedule alarms
-    navigator.serviceWorker.ready.then(() => {
-      setTimeout(scheduleAlarmsInServiceWorker, 1000);
-    });
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    navigator.serviceWorker.ready.then(() => setTimeout(swSchedule, 1000));
   }).catch(() => {});
 }
 </script>
-
 </body>
 </html>
